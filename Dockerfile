@@ -68,6 +68,13 @@ RUN apt-get update --fix-missing && apt-get install -y curl && \
 COPY --from=builder /install /usr/local
 COPY --from=builder /chroma /chroma
 
+
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    opentelemetry-instrumentation-fastapi \
+    opentelemetry-sdk \
+    
 ENV CHROMA_HOST_ADDR="0.0.0.0"
 ENV CHROMA_HOST_PORT=8000
 ENV CHROMA_WORKERS=1
