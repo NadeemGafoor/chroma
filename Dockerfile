@@ -10,12 +10,14 @@ RUN apt-get update --fix-missing && apt-get install -y --fix-missing \
     python3-dev \
     unzip \
     curl \
-    make && \
+    make \
+    git \
+    ca-certificates && \
     curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.92.0 && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir /install
 ENV PATH="/root/.cargo/bin:$PATH"
-RUN rustc --version && cargo --version
+RUN rustc --version && cargo --version && git --version
 
 RUN ARCH=$(uname -m) && \
   if [ "$ARCH" = "x86_64" ]; then \
@@ -52,8 +54,11 @@ RUN make -C idl proto_python
 # Ensure correct Rust toolchain is used (rust-toolchain.toml should be respected, but explicitly set it)
 RUN rustup toolchain install 1.92.0 && rustup default 1.92.0
 RUN rustc --version && cargo --version
-# Set environment variables to optimize Rust compilation
-ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+# Verify git is available and configure it for HTTPS
+RUN git --version
+RUN git config --global http.sslVerify true
+RUN git config --global url."https://".insteadOf git://
+# Build with maturin (cargo will use git for dependencies)
 RUN python3 -m maturin build
 RUN pip uninstall chromadb -y
 RUN pip install --prefix="/install" --find-links target/wheels/ --upgrade  chromadb
