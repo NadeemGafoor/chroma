@@ -11,10 +11,11 @@ RUN apt-get update --fix-missing && apt-get install -y --fix-missing \
     unzip \
     curl \
     make && \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable && \
+    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.92.0 && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir /install
 ENV PATH="/root/.cargo/bin:$PATH"
+RUN rustc --version && cargo --version
 
 RUN ARCH=$(uname -m) && \
   if [ "$ARCH" = "x86_64" ]; then \
@@ -47,6 +48,11 @@ COPY ./ /chroma
 # Generate Protobufs
 WORKDIR /chroma
 RUN make -C idl proto_python
+# Ensure correct Rust toolchain is used (rust-toolchain.toml should be respected, but explicitly set it)
+RUN rustup toolchain install 1.92.0 && rustup default 1.92.0
+RUN rustc --version && cargo --version
+# Set environment variables to optimize Rust compilation
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 RUN python3 -m maturin build
 RUN pip uninstall chromadb -y
 RUN pip install --prefix="/install" --find-links target/wheels/ --upgrade  chromadb
