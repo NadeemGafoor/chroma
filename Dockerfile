@@ -41,7 +41,8 @@ RUN --mount=type=cache,target=/root/.cache/pip pip install --upgrade --prefix="/
 RUN --mount=type=cache,target=/root/.cache/pip if [ "$REBUILD_HNSWLIB" = "true" ]; then pip install --no-binary :all: --force-reinstall --prefix="/install" chroma-hnswlib; fi
 
 # Install gRPC tools for Python with fixed version
-RUN pip install grpcio==1.58.0 grpcio-tools==1.58.0
+# Pin protobuf to compatible version for grpcio-tools 1.58.0
+RUN pip install "protobuf<5.0.0" grpcio==1.58.0 grpcio-tools==1.58.0
 # Copy source files to build Protobufs
 COPY ./ /chroma
 
@@ -81,7 +82,7 @@ RUN pip install --no-cache-dir \
     opentelemetry-instrumentation-fastapi \
     opentelemetry-sdk
 
-ENV CHROMA_HOST_ADDR="0.0.0.0"
+ENV CHROMA_HOST_ADDR=0.0.0.0
 ENV CHROMA_HOST_PORT=8000
 ENV CHROMA_WORKERS=1
 ENV CHROMA_LOG_CONFIG="chromadb/log_config.yml"
